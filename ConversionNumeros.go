@@ -2,148 +2,92 @@ package main
 
 import (
 	"fmt"
+	"strings"
 )
 
-type diccionarioRomano struct {
-    signo string
-    valor int
-}
-type restasValidas struct {
-    principal string
-    coeficientesAledanos []string;
+var romanValues = map[rune]int{
+	'I': 1, 'V': 5, 'X': 10, 'L': 50, 'C': 100, 'D': 500, 'M': 1000,
 }
 
-const entrada string = "XM";
-const longitud int = len(entrada);
-var valoresIndividuales [longitud]int;
-
-var pivote string = "";
-var sumaTemp int;
-
-var contadorRepeticiones int = 0;
-var sumaTotal int = 0;
-
-
-var diccionarioRestas = [7] restasValidas{
-    {"V", []string{"I"}},
-    {"X", []string{"I"}},
-    {"L", []string{"X"}},
-    {"C", []string{"X"}},
-    {"D", []string{"X","L"}},
-    {"M", []string{"C"}},
-}
-
-var numerosValidos = [7] diccionarioRomano{
-    {"I", 1},
-    {"V", 5}, 
-    {"X", 10}, 
-    {"L", 50}, 
-    {"C", 100},
-    {"D", 500},
-    {"M", 1000},
-}
-
-func retornarValorDeLetra(posicion int) int {
-    var valorARetornar int;
-    if posicion < longitud {
-        digito := string(entrada[posicion])
-        for _, numeroDiccionario := range numerosValidos {
-            if digito == numeroDiccionario.signo {
-                valorARetornar = int(numeroDiccionario.valor)
-                valoresIndividuales[posicion] = valorARetornar;
-            }
-        }
-    }else{
-        valorARetornar = 0;
-    }
-    return valorARetornar;
-}
-
-func main(){
-
-    // const entrada string = "XXL";
-
-	fmt.Println("Esta es la entrada: ", entrada);
-
-	for i := 0; i < longitud; i++ {
-
-        var valorDigitoRomano = retornarValorDeLetra(i)
-        var valorDigitoRomanoSiguiente = retornarValorDeLetra(i+1)
-
-		fmt.Println("Letra:", string(entrada[i]));
-        fmt.Println("valor del digito:", valorDigitoRomano)
-        fmt.Println("valor del digito siguiente:", valorDigitoRomanoSiguiente)
-        fmt.Println()
-
-        // // sumaTemp = valorDigitoRomano
-        // if valorDigitoRomanoSiguiente != 0{
-        //     if valorDigitoRomano == valorDigitoRomanoSiguiente {
-        //         sumaTemp += valorDigitoRomano+valorDigitoRomanoSiguiente;
-        //         // contadorRepeticiones++;
-    
-        //         // if contadorRepeticiones == 3 {
-        //         //     contadorRepeticiones=0;
-        //         // }
-        //     }
-        //     if valorDigitoRomano < valorDigitoRomanoSiguiente{
-        //         sumaTotal = valorDigitoRomanoSiguiente-sumaTemp;
-        //         sumaTemp = 0;
-        //     }            
-        // }else{
-        //     fmt.Println("Se cabaron los digitos")
-        //     sumaTotal = valorDigitoRomanoSiguiente+sumaTemp;
-        //     sumaTemp =0;
-        // }
-
-        // fmt.Println("Temporal acumulada: ",sumaTemp)
+func calculateValues(values string) []int {
+	var individualValues []int
+	for _, digit := range values {
+		individualValues = append(individualValues, romanValues[digit])
 	}
-    // const entrada string = "XXL";
-
-    var temp int = valoresIndividuales[0];
-    var contador int = 0;
-    var total int =0;
-    for _, item := range valoresIndividuales {
-        fmt.Println("aaaa",contador)
-
-        if contador < longitud-1 {
-            itemSiguiente := valoresIndividuales[contador+1];
-
-
-            if item<itemSiguiente {
-                // temp+=item
-                total += itemSiguiente-temp;
-                contador++
-                temp=0
-            }
-            if item == itemSiguiente {
-                temp += itemSiguiente
-            }
-            // if item>itemSiguiente {
-
-            //     total += itemSiguiente;
-            //     contador++;
-            // }
-        }else{
-            //Lista en el ultimo index
-            fmt.Println("ultimo valor", temp, total)
-            // if temp>valoresIndividuales[contador] {
-            //     total+= valoresIndividuales[longitud-1]+temp
-            // }
-        }
-        // item+=1;
-        contador++;
-    }
-
-    
-
-    fmt.Println("Estos son todos los valores de cada digito romano ", valoresIndividuales)
-    fmt.Println("Suma2 ", total)
-
+	return individualValues
 }
 
+func setSumAbst(arabicValues []int) []int {
+	for i := 1; i < len(arabicValues); i++ {
+		if arabicValues[i-1] < arabicValues[i] {
+			arabicValues[i-1] *= -1
+		}
+	}
+	return arabicValues
+}
 
+func convertNumbers(romanInput string) int {
+	allValues := calculateValues(romanInput)
+	signedAllValues := setSumAbst(allValues)
+	totalSum := 0
+	fmt.Println("All values:", allValues)
+	for _, value := range signedAllValues {
+		totalSum += value
+	}
+	return totalSum
+}
 
-// una idea es partirlo en numero (digitos) validos
+func isValidRomanNumber(text string) bool {
+	if isSyntacticallyCorrect(text) && isGrammaticallyCorrect(text) {
+		fmt.Println("Is the number valid? true")
+		return true
+	}
+	fmt.Println("Is the number valid? false")
+	return false
+}
 
+func isGrammaticallyCorrect(text string) bool {
+	threeDigitCounter := 0
+	for i, x := range text {
+		if i > 0 && rune(text[i-1]) == x {
+			threeDigitCounter++
+		} else {
+			threeDigitCounter = 0
+		}
+		if i > 2 && rune(text[i-2]) < x && rune(text[i-1]) < x {
+			fmt.Println("No more than 3 consecutive identical digits as a subst")
+			return false
+		}
+		if threeDigitCounter == 3 {
+			fmt.Println("No more than 3 consecutive identical digits are valid")
+			return false
+		}
+	}
+	return true
+}
 
+func isSyntacticallyCorrect(text string) bool {
+	for _, x := range text {
+		if _, exists := romanValues[x]; !exists {
+			fmt.Println("Invalid letter found:", string(x))
+			return false
+		}
+	}
+	return true
+}
 
+func main() {
+	var isValidNumber bool
+	var upperInput string
+
+	for !isValidNumber {
+		var inputText string
+		fmt.Print("Give a valid roman notation number: ")
+		fmt.Scanln(&inputText)
+		upperInput = strings.ToUpper(inputText)
+		fmt.Println("Input:", upperInput)
+		isValidNumber = isValidRomanNumber(upperInput)
+	}
+
+	fmt.Println(convertNumbers(upperInput))
+}
